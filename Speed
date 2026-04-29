@@ -1,13 +1,9 @@
--- LightningTrailVFX LocalScript
--- All systems (PartCache, LightningBolt, Trail VFX) combined into one file.
--- Trails/lights/particles only activate when player speed exceeds SPEED_THRESHOLD.
-
-local Players      = game:GetService("Players")
-local RunService   = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local Debris       = game:GetService("Debris")
-local Workspace    = game:GetService("Workspace")
-local Lighting     = game:GetService("Lighting")
+local Players           = game:GetService("Players")
+local RunService        = game:GetService("RunService")
+local TweenService      = game:GetService("TweenService")
+local Debris            = game:GetService("Debris")
+local Workspace         = game:GetService("Workspace")
+local Lighting          = game:GetService("Lighting")
 
 local LocalPlayer  = Players.LocalPlayer
 local Camera       = Workspace.CurrentCamera
@@ -865,7 +861,7 @@ local function spawnBolt(character)
     bolt.PulseLength      = 1
     bolt.PulseSpeed       = 2
     bolt.FadeLength       = 0.3
-    bolt.Thickness        = 0.08
+    bolt.Thickness        = 0.2
     bolt.MaxRadius        = 0.4
     bolt.AnimationSpeed   = 12
     bolt.Frequency        = 2
@@ -994,8 +990,8 @@ local function applyTrails(char)
             t.TextureMode     = Enum.TextureMode.Static
             t.Transparency    = NumberSequence.new({
                 NumberSequenceKeypoint.new(0,                          1,    0),
-                NumberSequenceKeypoint.new(0.0020000000949949026,      0.1,  0),
-                NumberSequenceKeypoint.new(0.098800003528594971,       0.25, 0),
+                NumberSequenceKeypoint.new(0.0020000000949949026,      0.6,  0),
+                NumberSequenceKeypoint.new(0.098800003528594971,       0.65, 0),
                 NumberSequenceKeypoint.new(0.30000001192092896,        0.8,  0),
                 NumberSequenceKeypoint.new(0.7996828556060791,         1,    0),
                 NumberSequenceKeypoint.new(1,                          1,    0),
