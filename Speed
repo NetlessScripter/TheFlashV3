@@ -1187,6 +1187,7 @@ end)
 -- Every physics frame, if the player is above the fast-run threshold AND
 -- is actively steering, snap horizontal velocity to match MoveDirection.
 -- This kills the sideways momentum that causes sliding on turns.
+local lastTurnSoundTime = 0
 RunService.Heartbeat:Connect(function()
     local moveDir = humanoid.MoveDirection
     if moveDir.Magnitude < 0.1 then return end          -- not steering, leave physics alone
@@ -1195,6 +1196,18 @@ RunService.Heartbeat:Connect(function()
     local hVel  = Vector3.new(vel.X, 0, vel.Z)
     local speed = hVel.Magnitude
     if speed < SPEED_RUN then return end                 -- only fix above fast-run speed
+
+    -- Detect a sharp turn: dot product between current velocity dir and new move dir
+    -- A dot near -1 = full 180°, near 0 = 90°. Trigger below 0.4 (roughly 66°+).
+    local velDir = hVel.Unit
+    local dot    = velDir:Dot(moveDir)
+    if dot < 0.4 then
+        local now = tick()
+        if now - lastTurnSoundTime > 0.4 then           -- debounce so it doesn't spam
+            lastTurnSoundTime = now
+            getgenv().Sound6D(SOUNDS.RUN_START, 2.5, false)
+        end
+    end
 
     -- Redirect horizontal velocity to the new move direction at the same speed.
     -- Y is untouched so jumps / gravity are never affected.
