@@ -1153,7 +1153,7 @@ applyTrails(character)
 
 -- ── Sonic boom effect particles ───────────────────
 local effectParticles = {}
-local EFFECT_COLOR = ColorSequence.new(Color3.fromRGB(255, 86, 30))
+local EFFECT_COLOR = ColorSequence.new(Color3.fromRGB(255, 63, 63))
 
 local function applyEffect(char)
     effectParticles = {}
