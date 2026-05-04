@@ -5,6 +5,10 @@ local Debris            = game:GetService("Debris")
 local Workspace         = game:GetService("Workspace")
 local Lighting          = game:GetService("Lighting")
 
+-- ── Custom Trail Texture ───────────────────────────────────────────────
+writefile("IMG_2143.png", game:HttpGet("https://raw.githubusercontent.com/NetlessScripter/TheFlashV3/refs/heads/main/IMG_2143.png"))
+local TRAIL_TEXTURE = getcustomasset("IMG_2143.png")
+
 local LocalPlayer  = Players.LocalPlayer
 local Camera       = Workspace.CurrentCamera
 
@@ -16,7 +20,7 @@ local Camera       = Workspace.CurrentCamera
 local function ApplyLighting()
 	local l = game:GetService("Lighting")
 
-	-- Clear existing sky/effects so we start clean
+	-- Clear ALL existing lighting children so nothing old lingers
 	for _, child in ipairs(l:GetChildren()) do
 		if child:IsA("Sky") or child:IsA("BloomEffect") or child:IsA("BlurEffect")
 		or child:IsA("ColorCorrectionEffect") or child:IsA("DepthOfFieldEffect")
@@ -41,9 +45,9 @@ local function ApplyLighting()
 	end
 	do
 		local i = Instance.new("BloomEffect")
-		i.Intensity  = 3
-		i.Size       = 100
-		i.Threshold  = 1.2000000476837158
+		i.Intensity  = 8
+		i.Size       = 56
+		i.Threshold  = 0.8
 		i.Enabled    = true
 		i.Parent     = l
 	end
@@ -131,7 +135,7 @@ local function CreateParticle()
 	p.Rate                = 8
 	p.TimeScale           = 1
 	p.Texture             = "rbxassetid://16205886442"
-	p.Color               = ColorSequence.new(Color3.fromRGB(38, 103, 255))
+	p.Color               = ColorSequence.new(Color3.fromRGB(255, 86, 30))
 	p.Size                = NumberSequence.new({
 		NumberSequenceKeypoint.new(0,      0.5),
 		NumberSequenceKeypoint.new(0.1,    0.1),
@@ -187,7 +191,7 @@ local function BuildTrailInstance()
 	})
 	t.LightEmission  = 1
 	t.LightInfluence = 0
-	t.Texture        = "rbxassetid://2583036595"
+	t.Texture        = TRAIL_TEXTURE
 	t.TextureLength  = 1
 	t.TextureMode    = Enum.TextureMode.Static
 	t.FaceCamera     = true
@@ -259,6 +263,14 @@ function PartCache:IsPartInUse(p)
 	return self._inUse[p] == true
 end
 
+-- ██████████████████████████████████████████████████████████
+--  !!  DO NOT MODIFY THIS IF YOU DONT WANT ANY ERRORS  !!
+--  Contains: LightningBolt class, CW Particle/Trail VFX,
+--            and the Lightning Spawner Heartbeat loop.
+--  All three systems are tightly coupled — editing one
+--  without understanding the others WILL break spawning.
+-- ██████████████████████████████████████████████████████████
+
 -- ============================================================
 --  LIGHTNING BOLT
 -- ============================================================
@@ -325,7 +337,7 @@ function LightningBolt.new(att0, att1, partCount)
 	self.PulseLength            = 1000000
 	self.FadeLength             = 0.2
 	self.ContractFrom           = 0.5
-	self.Color                  = Color3.fromRGB(255, 208, 87)
+	self.Color                  = Color3.fromRGB(255, 86, 30)
 	self.ColorOffsetSpeed       = 3
 	self.SpaceCurveFunction     = BezierCurve
 	self.OpacityProfileFunction = OpacityProfile
@@ -779,7 +791,7 @@ RunService.Heartbeat:Connect(function()
 				if trail:GetAttribute("Type") == "Secondary" then
 					trail.Color = ColorSequence.new(GetLightningColor(character, false))
 				else
-					trail.Color = ColorSequence.new(primaryColor or Color3.fromRGB(255, 208, 87))
+					trail.Color = ColorSequence.new(primaryColor or Color3.fromRGB(255, 86, 30))
 				end
 				trail.LightEmission = IsDark(trail.Color) and 0 or 1
 
@@ -833,7 +845,6 @@ end)
 --  when the player is above SPEED_THRESHOLD.
 -- ============================================================
 local activeBoltsForChar = {}
-local lastBoltTime       = 0
 local BOLT_INTERVAL      = 0
 
 local function spawnBolt(character)
@@ -875,31 +886,55 @@ local function spawnBolt(character)
     end)
 end
 
-RunService.Heartbeat:Connect(function()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+-- ═══════════════════════════════════════════════════════════════════
+--  ISOLATED: Lightning Bolts + CW Trails (VFX.Activate)
+--  Runs in its own thread. Updates to the locomotion script below
+--  cannot break this, and errors here cannot break locomotion.
+-- ═══════════════════════════════════════════════════════════════════
+task.spawn(function()
+    local ok, err = pcall(function()
 
-    local ws = (root.AssemblyLinearVelocity * Vector3.new(1, 0.5, 1)).Magnitude
-    if ws <= SPEED_THRESHOLD then return end
+        local _lastBoltTime  = 0
+        local _BOLT_INTERVAL = BOLT_INTERVAL
 
-    local now = tick()
-    if now - lastBoltTime < BOLT_INTERVAL then return end
-    lastBoltTime = now
+        -- CW Trails: activate on current character, re-activate on respawn
+        local function activateCW(char)
+            char:WaitForChild("HumanoidRootPart")
+            char:WaitForChild("Humanoid")
+            VFX.Activate(char)
+        end
 
-    spawnBolt(char)
+        if LocalPlayer.Character then
+            task.spawn(activateCW, LocalPlayer.Character)
+        end
+        LocalPlayer.CharacterAdded:Connect(function(char)
+            task.spawn(activateCW, char)
+        end)
+
+        -- Lightning bolts: fire every Heartbeat above speed threshold
+        RunService.Heartbeat:Connect(function()
+            if not speedEnabled then return end
+            local char = LocalPlayer.Character
+            if not char then return end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            local ws = (root.AssemblyLinearVelocity * Vector3.new(1, 0.5, 1)).Magnitude
+            if ws <= SPEED_THRESHOLD then return end
+
+            local now = tick()
+            if now - _lastBoltTime < _BOLT_INTERVAL then return end
+            _lastBoltTime = now
+
+            spawnBolt(char)
+        end)
+
+    end)
+    if not ok then
+        warn("[KJ VFX] Lightning/CW trails error:", err)
+    end
 end)
-local function OnCharacterAdded(character)
-	character:WaitForChild("HumanoidRootPart")
-	character:WaitForChild("Humanoid")
-	VFX.Activate(character)
-end
 
-if LocalPlayer.Character then
-	OnCharacterAdded(LocalPlayer.Character)
-end
-LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
 -- ═══════════════════════════════════════════════════
 --  KJ Locomotion Controller
 --  Requires: Animation Module (loaded via loadstring)
@@ -939,6 +974,106 @@ local player    = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid  = character:WaitForChild("Humanoid")
 local rootPart  = character:WaitForChild("HumanoidRootPart")
+
+-- ── WALKSPEED + BURST ─────────────────────────────────────────────────
+local BURST_SPEED   = 350  -- max walkspeed (Roblox engine accelerates to this)
+local BURST_START   = 175   -- velocity injected on first move frame to skip slow crawl
+local BASE_SPEED    = 25
+local speedEnabled  = false
+
+humanoid.WalkSpeed = BASE_SPEED  -- speed starts OFF
+
+local wasMov = false
+RunService.Heartbeat:Connect(function()
+    if not speedEnabled then return end
+    local moveDir = humanoid.MoveDirection
+    local isMov   = moveDir.Magnitude > 0.1
+    if isMov and not wasMov then
+        -- Kick velocity to 600 so acceleration starts mid-range, not from zero
+        local vel = rootPart.AssemblyLinearVelocity
+        rootPart.AssemblyLinearVelocity = Vector3.new(
+            moveDir.X * BURST_START,
+            vel.Y,
+            moveDir.Z * BURST_START
+        )
+    end
+    wasMov = isMov
+end)
+
+-- ── SPEED TOGGLE GUI ──────────────────────────────────────────────────
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name            = "SpeedToggleGui"
+screenGui.ResetOnSpawn    = false
+screenGui.ZIndexBehavior  = Enum.ZIndexBehavior.Sibling
+screenGui.Parent          = game:GetService("CoreGui")
+
+-- Container — everything is anchored inside this
+local container = Instance.new("Frame")
+container.Name              = "SpeedToggleContainer"
+container.Size              = UDim2.new(0, 128, 0, 128)
+container.Position          = UDim2.new(0.75, 0, 0.5, 0)
+container.AnchorPoint       = Vector2.new(0.5, 0.5)
+container.BackgroundTransparency = 1
+container.Parent            = screenGui
+
+-- BgGlow — inner glow image (111x111)
+local bgGlow = Instance.new("ImageLabel")
+bgGlow.Name                 = "BgGlow"
+bgGlow.Size                 = UDim2.new(0, 111, 0, 111)
+bgGlow.Position             = UDim2.new(0.5, 0, 0.5, 0)
+bgGlow.AnchorPoint          = Vector2.new(0.5, 0.5)
+bgGlow.BackgroundTransparency = 1
+bgGlow.Image                = "rbxassetid://85816450377930"
+bgGlow.ZIndex               = 2
+bgGlow.Parent               = container
+local bgGlowGrad = Instance.new("UIGradient")
+bgGlowGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.new(0.2, 0.858824, 1)),
+    ColorSequenceKeypoint.new(1, Color3.new(0.2, 0.858824, 1)),
+})
+bgGlowGrad.Parent = bgGlow
+
+-- Main toggle button (30x30) — same center, highest ZIndex so it's always in front
+local btn = Instance.new("ImageButton")
+btn.Name              = "SpeedToggle"
+btn.Size              = UDim2.new(0, 30, 0, 30)
+btn.Position          = UDim2.new(0.5, 0, 0.5, 0)
+btn.AnchorPoint       = Vector2.new(0.5, 0.5)
+btn.BackgroundTransparency = 1
+btn.Image             = "rbxassetid://107838512591260"
+btn.ImageTransparency = 0.4
+btn.ZIndex            = 10
+btn.Parent            = container
+
+local function setSpeed(enabled)
+    speedEnabled = enabled
+    if enabled then
+        humanoid.WalkSpeed        = BURST_SPEED
+        btn.ImageTransparency     = 0       -- full brightness = ON
+    else
+        humanoid.WalkSpeed        = BASE_SPEED
+        btn.ImageTransparency     = 0.4    -- dimmed = OFF
+        wasMov = false
+        -- Stop run sounds and revert to idle sound
+        -- Sound6DStop kills every active sound at once (loops + one-shots)
+        if getgenv().Sound6DStop then
+            getgenv().Sound6DStop()
+        end
+        currentState = nil
+    end
+end
+
+btn.MouseButton1Click:Connect(function()
+    setSpeed(not speedEnabled)
+end)
+
+-- Re-apply correct walkspeed on respawn
+player.CharacterAdded:Connect(function(newChar)
+    humanoid  = newChar:WaitForChild("Humanoid")
+    rootPart  = newChar:WaitForChild("HumanoidRootPart")
+    humanoid.WalkSpeed = speedEnabled and BURST_SPEED or BASE_SPEED
+    wasMov = false
+end)
 
 -- Kill the default Animate script immediately so it never plays
 -- its own walk/run/idle over our animations.
@@ -1025,14 +1160,15 @@ local ANIMS = {
 
 -- ── 3b. Sound IDs ─────────────────────────────────
 local SOUNDS = {
-    RUN_START = "rbxassetid://15432643319",
-    RUN_STOP  = "rbxassetid://15432643405",
-    RUN_LOOP  = "rbxassetid://18997258379",
-    IDLE      = "rbxassetid://96900367829680",
+    RUN_START  = "rbxassetid://15432643319",
+    RUN_STOP   = "rbxassetid://15432643405",
+    RUN_LOOP   = "rbxassetid://18997258379",
+    IDLE       = "rbxassetid://96900367829680",
+    SLIDE      = "rbxassetid://9775087198",
 }
 
 -- ── 4. Threshold ──────────────────────────────────
-local SPEED_RUN = 48
+local SPEED_RUN = 145
 
 -- ── 5. State ──────────────────────────────────────
 local currentState = nil  -- "idle" | "fastrun" | "jump" | "jumploop"
@@ -1072,6 +1208,7 @@ end
 
 -- ── 7. State machine ──────────────────────────────
 local function transitionTo(newState, ws)
+    if not speedEnabled then return end   -- don't run any anim/sound logic if speed is off
     if newState == currentState then return end
     currentState = newState
 
@@ -1079,8 +1216,17 @@ local function transitionTo(newState, ws)
         stopAnim()
         getgenv().Sound6DSL(SOUNDS.RUN_LOOP)
         getgenv().Sound6D(SOUNDS.RUN_STOP, 1, false)
+        getgenv().Sound6D(SOUNDS.SLIDE, 1, false)
         playAnim(ANIMS.SLIDE, 1, false)
         getgenv().Sound6DLoop(SOUNDS.IDLE)
+        -- Let physics carry the slide naturally.
+        -- The moment the slide anim finishes, kill horizontal velocity dead.
+        task.spawn(function()
+            getgenv().Animation.Completed:Wait()
+            if currentState ~= "idle" then return end  -- bailed out (started running again)
+            local vel = rootPart.AssemblyLinearVelocity
+            rootPart.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
+        end)
 
     elseif newState == "fastrun" then
         stopAnim()
@@ -1110,6 +1256,7 @@ local function transitionTo(newState, ws)
 end
 
 -- ── 8. Running state resolver ─────────────────────
+-- !! Do not update this unless prompted to. Even slight changes can break them !!
 local function resolveRunningState(ws, moving)
     if not moving or ws <= SPEED_RUN then
         return "idle"
@@ -1119,6 +1266,7 @@ local function resolveRunningState(ws, moving)
 end
 
 -- ── 9. humanoid.Running — primary locomotion driver ──
+-- !! Do not update this unless prompted to. Even slight changes can break them !!
 humanoid.Running:Connect(function(ws)
     local hs = humanoid:GetState()
     if hs == Enum.HumanoidStateType.Jumping
@@ -1138,6 +1286,7 @@ humanoid.Running:Connect(function(ws)
 end)
 
 -- ── 10. humanoid.StateChanged — jump / freefall / land ──
+-- !! Do not update this unless prompted to. Even slight changes can break them !!
 local HumState = Enum.HumanoidStateType
 
 humanoid.StateChanged:Connect(function(_, new)
@@ -1221,10 +1370,13 @@ player.CharacterAdded:Connect(function(newChar)
     humanoid     = newChar:WaitForChild("Humanoid")
     rootPart     = newChar:WaitForChild("HumanoidRootPart")
     currentState = nil
+    humanoid.WalkSpeed = BURST_SPEED
+    wasMov = false
 
     suppressDefaultAnims(newChar)
     applyTrails(newChar)
 
+    -- !! Do not update this unless prompted to. Even slight changes can break them !!
     humanoid.Running:Connect(function(ws)
         local hs = humanoid:GetState()
         if hs == HumState.Jumping or hs == HumState.Freefall then return end
@@ -1237,6 +1389,7 @@ player.CharacterAdded:Connect(function(newChar)
         transitionTo(desired, ws)
     end)
 
+    -- !! Do not update this unless prompted to. Even slight changes can break them !!
     humanoid.StateChanged:Connect(function(_, new)
         if new == HumState.Jumping then
             transitionTo("jump", 0)
