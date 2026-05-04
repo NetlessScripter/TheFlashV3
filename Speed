@@ -1060,6 +1060,7 @@ local function setSpeed(enabled)
             getgenv().Sound6DStop()
         end
         currentState = nil
+        setEffectEnabled(false)
     end
 end
 
@@ -1150,6 +1151,181 @@ end
 
 applyTrails(character)
 
+-- ── Sonic boom effect particles ───────────────────
+local effectParticles = {}
+local EFFECT_COLOR = ColorSequence.new(Color3.fromRGB(255, 86, 30))
+
+local function applyEffect(char)
+    effectParticles = {}
+    local root = char:WaitForChild("HumanoidRootPart")
+
+    local function make(props)
+        local p = Instance.new("ParticleEmitter")
+        for k, v in pairs(props) do p[k] = v end
+        p.Color   = EFFECT_COLOR
+        p.Enabled = false
+        p.Parent  = root
+        table.insert(effectParticles, p)
+    end
+
+    -- Big spread glow
+    make({
+        ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+        FlipbookFramerate = NumberRange.new(3.456, 3.456),
+        LightInfluence = 0, Lifetime = NumberRange.new(0.3, 0.3),
+        FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
+        SpreadAngle = Vector2.new(-125, 125), LockedToPart = true,
+        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Orientation = Enum.ParticleOrientation.FacingCamera,
+        Drag = 17.28, FlipbookStartRandom = false, TimeScale = 1, VelocitySpread = -125,
+        Squash = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Speed = NumberRange.new(2, 2), Brightness = 15,
+        Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 7), NumberSequenceKeypoint.new(1, 7)}),
+        Acceleration = Vector3.new(0, 0, 0), RotSpeed = NumberRange.new(0, 0), ZOffset = 2.809,
+        ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward, Rate = 5, VelocityInheritance = 0,
+        Rotation = NumberRange.new(-360, 360), ShapePartial = 1,
+        Texture = "rbxassetid://11862032588",
+        FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
+        EmissionDirection = Enum.NormalId.Back, Shape = Enum.ParticleEmitterShape.Box, LightEmission = 0,
+    })
+
+    -- Soft front glow
+    make({
+        ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+        FlipbookFramerate = NumberRange.new(0.667, 0.667),
+        LightInfluence = 0, Lifetime = NumberRange.new(0.1, 0.524),
+        FlipbookLayout = Enum.ParticleFlipbookLayout.None,
+        SpreadAngle = Vector2.new(0, 0), LockedToPart = true,
+        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.6, 0.7), NumberSequenceKeypoint.new(1, 1)}),
+        Orientation = Enum.ParticleOrientation.FacingCameraWorldUp,
+        Drag = 0, FlipbookStartRandom = false, TimeScale = 1, VelocitySpread = 0,
+        Squash = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Speed = NumberRange.new(0.0063, 0.0063), Brightness = 3,
+        Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 4.969), NumberSequenceKeypoint.new(1, 4.969)}),
+        Acceleration = Vector3.new(0, 0, 0), RotSpeed = NumberRange.new(0, 0), ZOffset = 3.724,
+        ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward, Rate = 11, VelocityInheritance = 0,
+        Rotation = NumberRange.new(0, 0), ShapePartial = 1,
+        Texture = "rbxassetid://17174518836",
+        FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
+        EmissionDirection = Enum.NormalId.Front, Shape = Enum.ParticleEmitterShape.Box, LightEmission = 1,
+    })
+
+    -- Wide scatter
+    make({
+        ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+        FlipbookFramerate = NumberRange.new(1, 1),
+        LightInfluence = 0, Lifetime = NumberRange.new(0.5, 0.5),
+        FlipbookLayout = Enum.ParticleFlipbookLayout.None,
+        SpreadAngle = Vector2.new(720, 720), LockedToPart = true,
+        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5006, 0.606), NumberSequenceKeypoint.new(1, 1)}),
+        Orientation = Enum.ParticleOrientation.FacingCamera,
+        Drag = 0, FlipbookStartRandom = false, TimeScale = 1, VelocitySpread = 720,
+        Squash = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Speed = NumberRange.new(0.0394, 0.0394), Brightness = 0,
+        Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 2.499), NumberSequenceKeypoint.new(1, 2.499)}),
+        Acceleration = Vector3.new(0, 0, 0), RotSpeed = NumberRange.new(0, 0), ZOffset = -1.079,
+        ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward, Rate = 5, VelocityInheritance = 0,
+        Rotation = NumberRange.new(0, 0), ShapePartial = 1,
+        Texture = "rbxassetid://124444737968958",
+        FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
+        EmissionDirection = Enum.NormalId.Top, Shape = Enum.ParticleEmitterShape.Box, LightEmission = 0,
+    })
+
+    -- Sparks
+    make({
+        ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+        FlipbookFramerate = NumberRange.new(1, 1),
+        LightInfluence = 0, Lifetime = NumberRange.new(0.25, 0.25),
+        FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4,
+        SpreadAngle = Vector2.new(45, 45), LockedToPart = true,
+        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Orientation = Enum.ParticleOrientation.VelocityParallel,
+        Drag = 5, FlipbookStartRandom = true, TimeScale = 1, VelocitySpread = 45,
+        Squash = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Speed = NumberRange.new(20, 60), Brightness = 15,
+        Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 1.659), NumberSequenceKeypoint.new(0.490, 2.115), NumberSequenceKeypoint.new(0.995, 2.505), NumberSequenceKeypoint.new(1, 2.505)}),
+        Acceleration = Vector3.new(0, 0, 0), RotSpeed = NumberRange.new(-25, 25), ZOffset = 0.582,
+        ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward, Rate = 15, VelocityInheritance = 0.5,
+        Rotation = NumberRange.new(-360, 360), ShapePartial = 1,
+        Texture = "rbxassetid://17702861925",
+        FlipbookMode = Enum.ParticleFlipbookMode.OneShot,
+        EmissionDirection = Enum.NormalId.Top, Shape = Enum.ParticleEmitterShape.Box, LightEmission = 0,
+    })
+
+    -- Flash burst
+    make({
+        ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+        FlipbookFramerate = NumberRange.new(1, 1),
+        LightInfluence = 0.4, Lifetime = NumberRange.new(0.15, 0.15),
+        FlipbookLayout = Enum.ParticleFlipbookLayout.None,
+        SpreadAngle = Vector2.new(35, 35), LockedToPart = true,
+        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.031, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Orientation = Enum.ParticleOrientation.FacingCamera,
+        Drag = 0, FlipbookStartRandom = false, TimeScale = 1, VelocitySpread = 35,
+        Squash = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.127, -0.0375), NumberSequenceKeypoint.new(0.339, 1.2), NumberSequenceKeypoint.new(1, 2.175)}),
+        Speed = NumberRange.new(-0.247, 0.247), Brightness = 5,
+        Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.046, 4.802), NumberSequenceKeypoint.new(0.076, 7.007), NumberSequenceKeypoint.new(0.116, 7.938), NumberSequenceKeypoint.new(0.165, 7.350), NumberSequenceKeypoint.new(0.216, 5.831), NumberSequenceKeypoint.new(0.271, 3.626), NumberSequenceKeypoint.new(0.351, 1.470), NumberSequenceKeypoint.new(0.412, 0.539), NumberSequenceKeypoint.new(0.473, 0.049), NumberSequenceKeypoint.new(0.577, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Acceleration = Vector3.new(0, 0, 0), RotSpeed = NumberRange.new(0, 0), ZOffset = 2.584,
+        ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward, Rate = 5, VelocityInheritance = 0,
+        Rotation = NumberRange.new(-360, 360), ShapePartial = 1,
+        Texture = "rbxassetid://1084970835",
+        FlipbookMode = Enum.ParticleFlipbookMode.Loop,
+        EmissionDirection = Enum.NormalId.Top, Shape = Enum.ParticleEmitterShape.Box, LightEmission = 1,
+    })
+
+    -- Upward streaks
+    make({
+        ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+        FlipbookFramerate = NumberRange.new(30, 30),
+        LightInfluence = 0, Lifetime = NumberRange.new(0.1, 0.3),
+        FlipbookLayout = Enum.ParticleFlipbookLayout.None,
+        SpreadAngle = Vector2.new(360, -360), LockedToPart = true,
+        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Orientation = Enum.ParticleOrientation.VelocityParallel,
+        Drag = 150, FlipbookStartRandom = false, TimeScale = 1, VelocitySpread = 360,
+        Squash = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.227, 0.860), NumberSequenceKeypoint.new(1, 3)}),
+        Speed = NumberRange.new(190, 190), Brightness = 2.5,
+        Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.271, 2.670), NumberSequenceKeypoint.new(1, 0)}),
+        Acceleration = Vector3.new(0, 2000.125, 0), RotSpeed = NumberRange.new(0, 0), ZOffset = 2.076,
+        ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward, Rate = 8, VelocityInheritance = 0,
+        Rotation = NumberRange.new(90, 90), ShapePartial = 1,
+        Texture = "http://www.roblox.com/asset/?id=15976387740",
+        FlipbookMode = Enum.ParticleFlipbookMode.Loop,
+        EmissionDirection = Enum.NormalId.Top, Shape = Enum.ParticleEmitterShape.Box, LightEmission = 0.45,
+    })
+
+    -- Fine embers
+    make({
+        ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+        FlipbookFramerate = NumberRange.new(1, 1),
+        LightInfluence = 0, Lifetime = NumberRange.new(0.4, 1.45),
+        FlipbookLayout = Enum.ParticleFlipbookLayout.None,
+        SpreadAngle = Vector2.new(70, 70), LockedToPart = true,
+        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0)}),
+        Orientation = Enum.ParticleOrientation.VelocityParallel,
+        Drag = 5, FlipbookStartRandom = false, TimeScale = 1, VelocitySpread = 70,
+        Squash = NumberSequence.new({NumberSequenceKeypoint.new(0, -0.836), NumberSequenceKeypoint.new(1, 0)}),
+        Speed = NumberRange.new(-25, -25), Brightness = 10,
+        Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.202, 0.281), NumberSequenceKeypoint.new(0.499, 0.187), NumberSequenceKeypoint.new(0.699, 0.094), NumberSequenceKeypoint.new(1, 0)}),
+        Acceleration = Vector3.new(0, 49.5, 0), RotSpeed = NumberRange.new(0, 0), ZOffset = 0.638,
+        ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward, Rate = 35, VelocityInheritance = 0,
+        Rotation = NumberRange.new(0, 0), ShapePartial = 1,
+        Texture = "rbxassetid://15845922645",
+        FlipbookMode = Enum.ParticleFlipbookMode.Loop,
+        EmissionDirection = Enum.NormalId.Top, Shape = Enum.ParticleEmitterShape.Box, LightEmission = 0,
+    })
+end
+
+local function setEffectEnabled(on)
+    for _, p in ipairs(effectParticles) do
+        if p and p.Parent then
+            p.Enabled = on
+        end
+    end
+end
+
+applyEffect(character)
+
 -- ── 3. Animation IDs ──────────────────────────────
 local ANIMS = {
     FAST_RUN  = "rbxassetid://13811491770",
@@ -1213,6 +1389,7 @@ local function transitionTo(newState, ws)
     currentState = newState
 
     if newState == "idle" then
+        setEffectEnabled(false)
         stopAnim()
         getgenv().Sound6DSL(SOUNDS.RUN_LOOP)
         getgenv().Sound6D(SOUNDS.RUN_STOP, 1, false)
@@ -1229,13 +1406,15 @@ local function transitionTo(newState, ws)
         end)
 
     elseif newState == "fastrun" then
+        setEffectEnabled(true)
         stopAnim()
         getgenv().Sound6DSL(SOUNDS.IDLE)
         getgenv().Sound6D(SOUNDS.RUN_START, 1, false)
         getgenv().Sound6DLoop(SOUNDS.RUN_LOOP)
-        playAnim(ANIMS.FAST_RUN, calcPlaybackSpeed(ws), true)
+        playAnim(ANIMS.FAST_RUN, 1, true)
 
     elseif newState == "jump" then
+        setEffectEnabled(false)
         stopAnim()
         getgenv().Sound6DSL(SOUNDS.RUN_LOOP)
         playAnim(ANIMS.JUMP, 1, false)
@@ -1277,7 +1456,7 @@ humanoid.Running:Connect(function(ws)
 
     if desired == currentState then
         if currentState == "fastrun" then
-            setLiveSpeed(calcPlaybackSpeed(ws))
+            setLiveSpeed(1)
         end
         return
     end
@@ -1328,7 +1507,7 @@ RunService.RenderStepped:Connect(function(dt)
 
     -- Nudge run playback speed live
     if currentState == "fastrun" then
-        setLiveSpeed(calcPlaybackSpeed(ws))
+        setLiveSpeed(1)
     end
 end)
 
@@ -1375,6 +1554,7 @@ player.CharacterAdded:Connect(function(newChar)
 
     suppressDefaultAnims(newChar)
     applyTrails(newChar)
+    applyEffect(newChar)
 
     -- !! Do not update this unless prompted to. Even slight changes can break them !!
     humanoid.Running:Connect(function(ws)
@@ -1383,7 +1563,7 @@ player.CharacterAdded:Connect(function(newChar)
         local moving  = humanoid.MoveDirection.Magnitude > 0.1
         local desired = resolveRunningState(ws, moving)
         if desired == currentState then
-            if currentState == "fastrun" then setLiveSpeed(calcPlaybackSpeed(ws)) end
+            if currentState == "fastrun" then setLiveSpeed(1) end
             return
         end
         transitionTo(desired, ws)
