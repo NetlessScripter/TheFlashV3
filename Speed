@@ -12,8 +12,31 @@ local TRAIL_TEXTURE = getcustomasset("IMG_2143.png")
 local LocalPlayer  = Players.LocalPlayer
 local Camera       = Workspace.CurrentCamera
 
--- ── Shared color used across all VFX (trails, particles, bolts) ───────
-local COLOR_DATA = Color3.new(0.513726, 0.678431, 0.862745)
+-- ── G_State color table — set getgenv().G_The_Flash = true for gold ───
+local G_State = {
+    Color_DATA = {
+        Default  = Color3.new(0.513726, 0.678431, 0.862745),  -- original blue
+        TheFlash = Color3.fromRGB(191, 143, 83),               -- gold
+    }
+}
+
+-- ── Negative Speed Force — evil speedsters ────────────────────────────
+--  Colors sourced from ColorSequence keypoints (both keypoints share the
+--  same Color3, so stored as plain Color3 and wrapped in ColorSequence
+--  the same way the rest of the system works)
+local NegativeSpeedForce = {
+    ReverseFlash  = Color3.new(1,        0.137255, 0.0588235),  -- red/orange
+    FastTrack     = Color3.new(0.72549,  0.72549,  0.72549),    -- silver/grey
+    NoraWestAllen = Color3.new(0.564706, 0.419608, 1),          -- purple
+}
+
+local function COLOR_DATA()
+    if getgenv().G_The_Flash      then return G_State.Color_DATA.TheFlash          end
+    if getgenv().G_ReverseFlash   then return NegativeSpeedForce.ReverseFlash       end
+    if getgenv().G_FastTrack      then return NegativeSpeedForce.FastTrack          end
+    if getgenv().G_NoraWestAllen  then return NegativeSpeedForce.NoraWestAllen      end
+    return G_State.Color_DATA.Default
+end
 
 -- ============================================================
 --  LIGHTING SETUP
@@ -138,7 +161,7 @@ local function CreateParticle()
 	p.Rate                = 8
 	p.TimeScale           = 1
 	p.Texture             = "rbxassetid://16205886442"
-	p.Color               = ColorSequence.new(COLOR_DATA)
+	p.Color               = ColorSequence.new(COLOR_DATA())
 	p.Size                = NumberSequence.new({
 		NumberSequenceKeypoint.new(0,      0.5),
 		NumberSequenceKeypoint.new(0.1,    0.1),
@@ -181,7 +204,7 @@ local function BuildTrailInstance()
 	local t = Instance.new("Trail")
 	t.Enabled        = true
 	t.Lifetime       = 0.15
-	t.Color          = ColorSequence.new(COLOR_DATA)
+	t.Color          = ColorSequence.new(COLOR_DATA())
 	t.Transparency   = NumberSequence.new({
 		NumberSequenceKeypoint.new(0,     1),
 		NumberSequenceKeypoint.new(0.005, 0),
@@ -339,7 +362,7 @@ function LightningBolt.new(att0, att1, partCount)
 	self.PulseLength            = 1000000
 	self.FadeLength             = 0.2
 	self.ContractFrom           = 0.5
-	self.Color                  = COLOR_DATA
+	self.Color                  = COLOR_DATA()
 	self.ColorOffsetSpeed       = 3
 	self.SpaceCurveFunction     = BezierCurve
 	self.OpacityProfileFunction = OpacityProfile
@@ -612,7 +635,7 @@ end
 
 -- Resolve which colour to display for this character's lightning
 local function GetLightningColor()
-	return COLOR_DATA
+	return COLOR_DATA()
 end
 
 -- Spawn a brief point light at a random location on the body
@@ -793,7 +816,7 @@ RunService.Heartbeat:Connect(function()
 				if trail:GetAttribute("Type") == "Secondary" then
 					trail.Color = ColorSequence.new(GetLightningColor(character, false))
 				else
-					trail.Color = ColorSequence.new(primaryColor or COLOR_DATA)
+					trail.Color = ColorSequence.new(primaryColor or COLOR_DATA())
 				end
 				trail.LightEmission = IsDark(trail.Color) and 0 or 1
 
@@ -1185,8 +1208,8 @@ bgGlow.ZIndex               = 2
 bgGlow.Parent               = container
 local bgGlowGrad = Instance.new("UIGradient")
 bgGlowGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, COLOR_DATA),
-    ColorSequenceKeypoint.new(1, COLOR_DATA),
+    ColorSequenceKeypoint.new(0, COLOR_DATA()),
+    ColorSequenceKeypoint.new(1, COLOR_DATA()),
 })
 bgGlowGrad.Parent = bgGlow
 
@@ -1225,8 +1248,8 @@ chargeBoostGlow.ZIndex                 = 2
 chargeBoostGlow.Parent                 = chargeBoostContainer
 local chargeBoostGlowGrad = Instance.new("UIGradient")
 chargeBoostGlowGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, COLOR_DATA),
-    ColorSequenceKeypoint.new(1, COLOR_DATA),
+    ColorSequenceKeypoint.new(0, COLOR_DATA()),
+    ColorSequenceKeypoint.new(1, COLOR_DATA()),
 })
 chargeBoostGlowGrad.Parent = chargeBoostGlow
 
@@ -1261,8 +1284,8 @@ boostGlow.ZIndex                 = 2
 boostGlow.Parent                 = boostContainer
 local boostGlowGrad = Instance.new("UIGradient")
 boostGlowGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, COLOR_DATA),
-    ColorSequenceKeypoint.new(1, COLOR_DATA),
+    ColorSequenceKeypoint.new(0, COLOR_DATA()),
+    ColorSequenceKeypoint.new(1, COLOR_DATA()),
 })
 boostGlowGrad.Parent = boostGlow
 
@@ -1297,8 +1320,8 @@ decreaseGlow.ZIndex                 = 2
 decreaseGlow.Parent                 = decreaseContainer
 local decreaseGlowGrad = Instance.new("UIGradient")
 decreaseGlowGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, COLOR_DATA),
-    ColorSequenceKeypoint.new(1, COLOR_DATA),
+    ColorSequenceKeypoint.new(0, COLOR_DATA()),
+    ColorSequenceKeypoint.new(1, COLOR_DATA()),
 })
 decreaseGlowGrad.Parent = decreaseGlow
 
@@ -1368,6 +1391,96 @@ boostBtn.MouseButton1Down:Connect(startBoost)
 boostBtn.MouseButton1Up:Connect(stopBoost)
 decreaseBtn.MouseButton1Down:Connect(startDecrease)
 decreaseBtn.MouseButton1Up:Connect(stopDecrease)
+
+-- ── Phasing Button (BELOW the toggle) ─────────────────────────────────
+local phasingContainer = Instance.new("Frame")
+phasingContainer.Name              = "PhasingContainer"
+phasingContainer.Size              = UDim2.new(0, 128, 0, 128)
+phasingContainer.Position          = UDim2.new(0.75, 0, 0.5, 90)
+phasingContainer.AnchorPoint       = Vector2.new(0.5, 0.5)
+phasingContainer.BackgroundTransparency = 1
+phasingContainer.Parent            = screenGui
+
+local phasingGlow = Instance.new("ImageLabel")
+phasingGlow.Name                   = "BgGlow"
+phasingGlow.Size                   = UDim2.new(0, 111, 0, 111)
+phasingGlow.Position               = UDim2.new(0.5, 0, 0.5, 0)
+phasingGlow.AnchorPoint            = Vector2.new(0.5, 0.5)
+phasingGlow.BackgroundTransparency = 1
+phasingGlow.Image                  = "rbxassetid://85816450377930"
+phasingGlow.ZIndex                 = 2
+phasingGlow.Parent                 = phasingContainer
+local phasingGlowGrad = Instance.new("UIGradient")
+phasingGlowGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, COLOR_DATA()),
+    ColorSequenceKeypoint.new(1, COLOR_DATA()),
+})
+phasingGlowGrad.Parent = phasingGlow
+
+local phasingBtn = Instance.new("ImageButton")
+phasingBtn.Name              = "Phasing"
+phasingBtn.Size              = UDim2.new(0, 30, 0, 30)
+phasingBtn.Position          = UDim2.new(0.5, 0, 0.5, 0)
+phasingBtn.AnchorPoint       = Vector2.new(0.5, 0.5)
+phasingBtn.BackgroundTransparency = 1
+phasingBtn.Image             = "rbxassetid://97915572818648"
+phasingBtn.ImageTransparency = 0.4
+phasingBtn.ZIndex            = 10
+phasingBtn.Parent            = phasingContainer
+
+-- ── Phasing State ──────────────────────────────────────────────────────
+local phasingEnabled = false
+
+-- Returns the correct looping phasing sound for the active speedster type.
+-- SpeedForce (TheFlash) gets the Speed Force phasing sound.
+-- Everything else (DCEU Flash, all NegativeSpeedForce variants) gets the DCEU sound.
+local function GetPhasingSound()
+    if getgenv().G_The_Flash then
+        return "rbxassetid://79778043606578"
+    end
+    return "rbxassetid://15602103632"
+end
+
+local function setPhasing(enabled)
+    -- Phasing requires speed to be active
+    if enabled and not speedEnabled then return end
+    phasingEnabled = enabled
+    if enabled then
+        phasingBtn.ImageTransparency = 0        -- full brightness = ON
+        -- Start the looping phasing sound via Sound6DLoop (no-stacking, clean stop via Sound6DSL)
+        getgenv().Sound6DLoop(GetPhasingSound(), 1)
+    else
+        phasingBtn.ImageTransparency = 0.4      -- dimmed = OFF
+        -- Restore collision on all character parts
+        local char = Players.LocalPlayer.Character
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+        -- Stop the looping phasing sound
+        getgenv().Sound6DSL(GetPhasingSound())
+    end
+end
+
+phasingBtn.MouseButton1Click:Connect(function()
+    setPhasing(not phasingEnabled)
+end)
+
+-- Enforce noclip every Heartbeat while phasing is active so the game
+-- can never silently re-enable collision on any part.
+RunService.Heartbeat:Connect(function()
+    if not phasingEnabled then return end
+    local char = Players.LocalPlayer.Character
+    if not char then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end)
 
 -- ── CHARGE BOOST STATE ────────────────────────────────────────────────
 -- Constants
@@ -1486,8 +1599,8 @@ local function applyTrails(char)
             t.Name            = "Blur"
             t.Brightness      = 0.20000000298023224
             t.Color           = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, COLOR_DATA),
-                ColorSequenceKeypoint.new(1, COLOR_DATA),
+                ColorSequenceKeypoint.new(0, COLOR_DATA()),
+                ColorSequenceKeypoint.new(1, COLOR_DATA()),
             })
             t.LightEmission   = 1
             t.LightInfluence  = 0
@@ -1524,7 +1637,7 @@ applyTrails(character)
 -- ── Sonic boom effect particles ───────────────────
 local effectParticles       = {}
 local chargeEffectParticles = {}
-local EFFECT_COLOR = ColorSequence.new(COLOR_DATA)
+local EFFECT_COLOR = ColorSequence.new(COLOR_DATA())
 
 local function applyEffect(char)
     effectParticles = {}
@@ -2278,6 +2391,7 @@ local ANIMS = {
 }
 
 -- ── 3b. Sound IDs ─────────────────────────────────
+--  Reverse Flash sounds (default / original)
 local SOUNDS = {
     RUN_START     = "rbxassetid://15432643319",
     RUN_STOP      = "rbxassetid://15432643405",
@@ -2286,8 +2400,45 @@ local SOUNDS = {
     SLIDE         = "rbxassetid://9775087198",
     BOOST_RELEASE = "rbxassetid://16536538664",
     BOOST_CHARGE  = "rbxassetid://115241322457935",
+    PHASING       = "rbxassetid://15602103632",   -- NegativeSpeedForce / DCEU phasing loop
 }
 
+--  Speed Force Speedsters
+local SpeedForceSpeedsters = {
+    --  DCEU Flash (default blue character)
+    DCEUFlash = {
+        RUN_START     = "rbxassetid://88761682727794",
+        RUN_STOP      = "rbxassetid://126497892481240",
+        RUN_LOOP      = "rbxassetid://130865582326295",
+        IDLE          = "rbxassetid://110469890349767",
+        SLIDE         = "rbxassetid://9775087198",
+        BOOST_RELEASE = "rbxassetid://16536538664",
+        BOOST_CHARGE  = "rbxassetid://115241322457935",
+        PHASING       = "rbxassetid://15602103632",   -- DCEU phasing loop
+    },
+    --  The Flash (Barry Allen / Speed Force)
+    TheFlash = {
+        RUN_START      = "rbxassetid://15432652793",
+        RUN_STOP       = "rbxassetid://15432652870",
+        RUN_LOOP       = "rbxassetid://121989645012191",
+        IDLE           = "rbxassetid://18997260473",
+        SLIDE          = "rbxassetid://9775087198",
+        RUN_STOP_EXTRA = "rbxassetid://90654444775320",
+        BOOST_RELEASE  = "rbxassetid://16536538664",
+        BOOST_CHARGE   = "rbxassetid://115241322457935",
+        PHASING        = "rbxassetid://79778043606578",  -- SpeedForce phasing loop
+    },
+}
+
+--  Resolve which sound pack to use based on G_State flag
+--  getgenv().G_The_Flash     = true  ->  TheFlash pack
+--  getgenv().G_ReverseFlash  = true  ->  DCEUFlash pack (explicit)
+--  default                           ->  DCEUFlash pack (blue guy)
+local function GetActiveSounds()
+    if getgenv().G_The_Flash    then return SpeedForceSpeedsters.TheFlash  end
+    if getgenv().G_ReverseFlash then return SOUNDS                         end
+    return SpeedForceSpeedsters.DCEUFlash
+end
 -- ── 4. Threshold ──────────────────────────────────
 local SPEED_RUN = 145
 
@@ -2341,11 +2492,14 @@ local function transitionTo(newState, ws)
             BURST_START = 175
         end
         stopAnim()
-        getgenv().Sound6DSL(SOUNDS.RUN_LOOP)
-        getgenv().Sound6D(SOUNDS.RUN_STOP, 1, false)
-        getgenv().Sound6D(SOUNDS.SLIDE, 1, false)
+        getgenv().Sound6DSL(GetActiveSounds().RUN_LOOP)
+        getgenv().Sound6D(GetActiveSounds().RUN_STOP, 1, false)
+        if GetActiveSounds().RUN_STOP_EXTRA then
+            getgenv().Sound6D(GetActiveSounds().RUN_STOP_EXTRA, 1, false)
+        end
+        getgenv().Sound6D(GetActiveSounds().SLIDE, 1, false)
         playAnim(ANIMS.SLIDE, 1, false)
-        getgenv().Sound6DLoop(SOUNDS.IDLE)
+        getgenv().Sound6DLoop(GetActiveSounds().IDLE)
         -- Let physics carry the slide naturally.
         -- The moment the slide anim finishes, kill horizontal velocity dead.
         task.spawn(function()
@@ -2358,15 +2512,15 @@ local function transitionTo(newState, ws)
     elseif newState == "fastrun" then
         setEffectEnabled(true)
         stopAnim()
-        getgenv().Sound6DSL(SOUNDS.IDLE)
-        getgenv().Sound6D(SOUNDS.RUN_START, 1, false)
-        getgenv().Sound6DLoop(SOUNDS.RUN_LOOP)
+        getgenv().Sound6DSL(GetActiveSounds().IDLE)
+        getgenv().Sound6D(GetActiveSounds().RUN_START, 1, false)
+        getgenv().Sound6DLoop(GetActiveSounds().RUN_LOOP)
         playAnim(ANIMS.FAST_RUN, 1, true)
 
     elseif newState == "jump" then
         setEffectEnabled(false)
         stopAnim()
-        getgenv().Sound6DSL(SOUNDS.RUN_LOOP)
+        getgenv().Sound6DSL(GetActiveSounds().RUN_LOOP)
         playAnim(ANIMS.JUMP, 1, false)
         task.spawn(function()
             getgenv().Animation.Completed:Wait()
@@ -2423,7 +2577,7 @@ cancelChargeBoost = function()
     setEffectEnabled(false)
     setChargeEffectEnabled(false)
     chargeBoostBtn.ImageTransparency = 0.4
-    getgenv().Sound6DSL(SOUNDS.BOOST_CHARGE)
+    getgenv().Sound6DSL(GetActiveSounds().BOOST_CHARGE)
 
     -- Re-sync locomotion to whatever state the player is actually in
     currentState = nil
@@ -2459,8 +2613,8 @@ triggerBoostActivation = function()
         boostActive        = true
         setEffectEnabled(true)
         setChargeEffectEnabled(false)
-        getgenv().Sound6DSL(SOUNDS.BOOST_CHARGE)
-        getgenv().Sound6D(SOUNDS.BOOST_RELEASE, 2.5, false)
+        getgenv().Sound6DSL(GetActiveSounds().BOOST_CHARGE)
+        getgenv().Sound6D(GetActiveSounds().BOOST_RELEASE, 2.5, false)
 
         -- BOOM: inject velocity immediately instead of relying on the Heartbeat race.
         -- Without this, the main Heartbeat often fires first with the old BURST_START (175),
@@ -2524,7 +2678,7 @@ startChargeBoost = function()
     chargeBoostBtn.ImageTransparency = 0
     setEffectEnabled(true)
     setChargeEffectEnabled(true)
-    getgenv().Sound6DLoop(SOUNDS.BOOST_CHARGE, 1.5)
+    getgenv().Sound6DLoop(GetActiveSounds().BOOST_CHARGE, 1.5)
 
     -- Play startup animation (non-looped)
     playAnim(ANIMS.BOOST_STARTUP, 1, false)
@@ -2664,7 +2818,7 @@ RunService.Heartbeat:Connect(function()
             lastTurnSoundTime = now
 
      CurrentShaker:Shake(ShakePresets.BoostFire())
-            getgenv().Sound6D(SOUNDS.RUN_START, 2.5, false)
+            getgenv().Sound6D(GetActiveSounds().RUN_START, 2.5, false)
         end
     end
 
