@@ -19,7 +19,7 @@ local Camera       = Workspace.CurrentCamera
 local G_State = {
     Color_DATA = {
         Default  = Color3.new(0.513726, 0.678431, 0.862745),  -- original blue
-        TheFlash = Color3.fromRGB(191, 143, 83),               -- gold
+        TheFlash = Color3.new(0.74902, 0.560784, 0.32549),     -- gold
     }
 }
 
