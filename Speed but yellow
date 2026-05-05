@@ -13,7 +13,7 @@ local LocalPlayer  = Players.LocalPlayer
 local Camera       = Workspace.CurrentCamera
 
 -- ── Shared color used across all VFX (trails, particles, bolts) ───────
-local COLOR_DATA = Color3.new(191, 143, 83)
+local COLOR_DATA = Color3.fromRGB(191, 143, 83)
 
 -- ============================================================
 --  LIGHTING SETUP
