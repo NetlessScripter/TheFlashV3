@@ -1438,10 +1438,10 @@ phasingBtn.Parent            = phasingContainer
 local phasingEnabled = false
 
 -- Returns the correct looping phasing sound for the active speedster type.
--- SpeedForce (TheFlash) gets the Speed Force phasing sound.
--- Everything else (DCEU Flash, all NegativeSpeedForce variants) gets the DCEU sound.
+-- TheFlash gets the SpeedForce phasing sound.
+-- Everyone else (Default DCEU + all NegativeSpeedForce) gets the DCEU phasing sound.
 local function GetPhasingSound()
-    if getgenv().G_The_Flash then
+    if _G.SpeedsterType == "TheFlash" then
         return "rbxassetid://79778043606578"
     end
     return "rbxassetid://15602103632"
@@ -2436,13 +2436,15 @@ local SpeedForceSpeedsters = {
     },
 }
 
---  Resolve which sound pack to use based on G_State flag
---  getgenv().G_The_Flash     = true  ->  TheFlash pack
---  getgenv().G_ReverseFlash  = true  ->  DCEUFlash pack (explicit)
---  default                           ->  DCEUFlash pack (blue guy)
+--  Resolve which sound pack to use based on _G.SpeedsterType
+--  "TheFlash"                        ->  TheFlash (SpeedForce) pack
+--  "ReverseFlash"|"FastTrack"|"NoraWestAllen" -> SOUNDS (NegativeSpeedForce pack)
+--  "Default" / nil                   ->  DCEUFlash pack
 local function GetActiveSounds()
-    if getgenv().G_The_Flash    then return SpeedForceSpeedsters.TheFlash  end
-    if getgenv().G_ReverseFlash then return SOUNDS                         end
+    if _G.SpeedsterType == "TheFlash"      then return SpeedForceSpeedsters.TheFlash  end
+    if _G.SpeedsterType == "ReverseFlash"
+    or _G.SpeedsterType == "FastTrack"
+    or _G.SpeedsterType == "NoraWestAllen" then return SOUNDS                         end
     return SpeedForceSpeedsters.DCEUFlash
 end
 -- ── 4. Threshold ──────────────────────────────────
