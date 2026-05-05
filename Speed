@@ -12,7 +12,10 @@ local TRAIL_TEXTURE = getcustomasset("IMG_2143.png")
 local LocalPlayer  = Players.LocalPlayer
 local Camera       = Workspace.CurrentCamera
 
--- ── G_State color table — set getgenv().G_The_Flash = true for gold ───
+-- ── G_State color table — set _G.SpeedsterType before running the script ───
+--  e.g. _G.SpeedsterType = "ReverseFlash"
+--  Options: "TheFlash", "ReverseFlash", "FastTrack", "NoraWestAllen"
+--  Leave unset (or set to nil) for the default blue.
 local G_State = {
     Color_DATA = {
         Default  = Color3.new(0.513726, 0.678431, 0.862745),  -- original blue
@@ -30,11 +33,15 @@ local NegativeSpeedForce = {
     NoraWestAllen = Color3.new(0.564706, 0.419608, 1),          -- purple
 }
 
+if _G.SpeedsterType == nil then
+    _G.SpeedsterType = "Default"
+end
+
 local function COLOR_DATA()
-    if getgenv().G_The_Flash      then return G_State.Color_DATA.TheFlash          end
-    if getgenv().G_ReverseFlash   then return NegativeSpeedForce.ReverseFlash       end
-    if getgenv().G_FastTrack      then return NegativeSpeedForce.FastTrack          end
-    if getgenv().G_NoraWestAllen  then return NegativeSpeedForce.NoraWestAllen      end
+    if _G.SpeedsterType == "TheFlash"      then return G_State.Color_DATA.TheFlash        end
+    if _G.SpeedsterType == "ReverseFlash"  then return NegativeSpeedForce.ReverseFlash    end
+    if _G.SpeedsterType == "FastTrack"     then return NegativeSpeedForce.FastTrack       end
+    if _G.SpeedsterType == "NoraWestAllen" then return NegativeSpeedForce.NoraWestAllen   end
     return G_State.Color_DATA.Default
 end
 -- ============================================================
