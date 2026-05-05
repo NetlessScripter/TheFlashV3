@@ -12,6 +12,9 @@ local TRAIL_TEXTURE = getcustomasset("IMG_2143.png")
 local LocalPlayer  = Players.LocalPlayer
 local Camera       = Workspace.CurrentCamera
 
+-- ── Shared color used across all VFX (trails, particles, bolts) ───────
+local COLOR_DATA = Color3.new(0.513726, 0.678431, 0.862745)
+
 -- ============================================================
 --  LIGHTING SETUP
 --  All values sourced from LightingRipper output 2026-04-28
@@ -135,7 +138,7 @@ local function CreateParticle()
 	p.Rate                = 8
 	p.TimeScale           = 1
 	p.Texture             = "rbxassetid://16205886442"
-	p.Color               = ColorSequence.new(Color3.new(0.513726, 0.678431, 0.862745))
+	p.Color               = ColorSequence.new(COLOR_DATA)
 	p.Size                = NumberSequence.new({
 		NumberSequenceKeypoint.new(0,      0.5),
 		NumberSequenceKeypoint.new(0.1,    0.1),
@@ -178,7 +181,7 @@ local function BuildTrailInstance()
 	local t = Instance.new("Trail")
 	t.Enabled        = true
 	t.Lifetime       = 0.15
-	t.Color          = ColorSequence.new(Color3.new(0.513726, 0.678431, 0.862745))
+	t.Color          = ColorSequence.new(COLOR_DATA)
 	t.Transparency   = NumberSequence.new({
 		NumberSequenceKeypoint.new(0,     1),
 		NumberSequenceKeypoint.new(0.005, 0),
@@ -200,7 +203,6 @@ local function BuildTrailInstance()
 end
 
 local SPEED_THRESHOLD = 48   -- trails, particles, lightning bolts all activate above this
-local TRAIL_COLOR     = Color3.new(0.513726, 0.678431, 0.862745)  -- sourced from TrailColors folder
 local TRAIL_Y_OFFSETS = { -1.45, -0.65, 0.25, 1.45 }
 local TRAIL_TEXTURES  = {
 	"rbxassetid://11284509604",
@@ -337,7 +339,7 @@ function LightningBolt.new(att0, att1, partCount)
 	self.PulseLength            = 1000000
 	self.FadeLength             = 0.2
 	self.ContractFrom           = 0.5
-	self.Color                  = Color3.new(0.513726, 0.678431, 0.862745)
+	self.Color                  = COLOR_DATA
 	self.ColorOffsetSpeed       = 3
 	self.SpaceCurveFunction     = BezierCurve
 	self.OpacityProfileFunction = OpacityProfile
@@ -610,7 +612,7 @@ end
 
 -- Resolve which colour to display for this character's lightning
 local function GetLightningColor()
-	return TRAIL_COLOR
+	return COLOR_DATA
 end
 
 -- Spawn a brief point light at a random location on the body
@@ -791,7 +793,7 @@ RunService.Heartbeat:Connect(function()
 				if trail:GetAttribute("Type") == "Secondary" then
 					trail.Color = ColorSequence.new(GetLightningColor(character, false))
 				else
-					trail.Color = ColorSequence.new(primaryColor or Color3.new(0.513726, 0.678431, 0.862745))
+					trail.Color = ColorSequence.new(primaryColor or COLOR_DATA)
 				end
 				trail.LightEmission = IsDark(trail.Color) and 0 or 1
 
@@ -1129,6 +1131,12 @@ local wasMov = false
 local shakeDebounce = false   -- prevents Sprint shake from firing every frame
 RunService.Heartbeat:Connect(function()
     if not speedEnabled then return end
+
+    -- Force our speed every frame so the game can never overwrite it
+    if humanoid.WalkSpeed ~= savedSpeed then
+        humanoid.WalkSpeed = savedSpeed
+    end
+
     local moveDir = humanoid.MoveDirection
     local isMov   = moveDir.Magnitude > 0.1
     if isMov and not wasMov then
@@ -1177,8 +1185,8 @@ bgGlow.ZIndex               = 2
 bgGlow.Parent               = container
 local bgGlowGrad = Instance.new("UIGradient")
 bgGlowGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.new(0.513726, 0.678431, 0.862745)),
-    ColorSequenceKeypoint.new(1, Color3.new(0.513726, 0.678431, 0.862745)),
+    ColorSequenceKeypoint.new(0, COLOR_DATA),
+    ColorSequenceKeypoint.new(1, COLOR_DATA),
 })
 bgGlowGrad.Parent = bgGlow
 
@@ -1217,8 +1225,8 @@ chargeBoostGlow.ZIndex                 = 2
 chargeBoostGlow.Parent                 = chargeBoostContainer
 local chargeBoostGlowGrad = Instance.new("UIGradient")
 chargeBoostGlowGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.new(0.513726, 0.678431, 0.862745)),
-    ColorSequenceKeypoint.new(1, Color3.new(0.513726, 0.678431, 0.862745)),
+    ColorSequenceKeypoint.new(0, COLOR_DATA),
+    ColorSequenceKeypoint.new(1, COLOR_DATA),
 })
 chargeBoostGlowGrad.Parent = chargeBoostGlow
 
@@ -1253,8 +1261,8 @@ boostGlow.ZIndex                 = 2
 boostGlow.Parent                 = boostContainer
 local boostGlowGrad = Instance.new("UIGradient")
 boostGlowGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.new(0.513726, 0.678431, 0.862745)),
-    ColorSequenceKeypoint.new(1, Color3.new(0.513726, 0.678431, 0.862745)),
+    ColorSequenceKeypoint.new(0, COLOR_DATA),
+    ColorSequenceKeypoint.new(1, COLOR_DATA),
 })
 boostGlowGrad.Parent = boostGlow
 
@@ -1289,8 +1297,8 @@ decreaseGlow.ZIndex                 = 2
 decreaseGlow.Parent                 = decreaseContainer
 local decreaseGlowGrad = Instance.new("UIGradient")
 decreaseGlowGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.new(0.513726, 0.678431, 0.862745)),
-    ColorSequenceKeypoint.new(1, Color3.new(0.513726, 0.678431, 0.862745)),
+    ColorSequenceKeypoint.new(0, COLOR_DATA),
+    ColorSequenceKeypoint.new(1, COLOR_DATA),
 })
 decreaseGlowGrad.Parent = decreaseGlow
 
@@ -1478,8 +1486,8 @@ local function applyTrails(char)
             t.Name            = "Blur"
             t.Brightness      = 0.20000000298023224
             t.Color           = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.new(0.513726, 0.678431, 0.862745)),
-                ColorSequenceKeypoint.new(1, Color3.new(0.513726, 0.678431, 0.862745)),
+                ColorSequenceKeypoint.new(0, COLOR_DATA),
+                ColorSequenceKeypoint.new(1, COLOR_DATA),
             })
             t.LightEmission   = 1
             t.LightInfluence  = 0
@@ -1516,7 +1524,7 @@ applyTrails(character)
 -- ── Sonic boom effect particles ───────────────────
 local effectParticles       = {}
 local chargeEffectParticles = {}
-local EFFECT_COLOR = ColorSequence.new(Color3.new(0.513726, 0.678431, 0.862745))
+local EFFECT_COLOR = ColorSequence.new(COLOR_DATA)
 
 local function applyEffect(char)
     effectParticles = {}
@@ -2721,4 +2729,3 @@ player.CharacterAdded:Connect(function(newChar)
         end
     end)
 end)
-
