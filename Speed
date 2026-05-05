@@ -2655,7 +2655,6 @@ RunService.Heartbeat:Connect(function()
         if now - lastTurnSoundTime > 0.4 then           -- debounce so it doesn't spam
             lastTurnSoundTime = now
             getgenv().Sound6D(SOUNDS.RUN_START, 2.5, false)
-        CurrentShaker:Shake(ShakePresets.BoostFire())
         end
     end
 
