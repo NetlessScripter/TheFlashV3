@@ -2447,7 +2447,7 @@ triggerBoostActivation = function()
         -- preBoostSavedSpeed captured at startChargeBoost; BURST_START already live-updated
         humanoid.WalkSpeed = speedToApply
         savedSpeed         = speedToApply
-        BURST_START        = speedToApply - 200
+        BURST_START        = 1000
         boostActive        = true
         setEffectEnabled(true)
         setChargeEffectEnabled(false)
@@ -2654,6 +2654,8 @@ RunService.Heartbeat:Connect(function()
         local now = tick()
         if now - lastTurnSoundTime > 0.4 then           -- debounce so it doesn't spam
             lastTurnSoundTime = now
+
+     CurrentShaker:Shake(ShakePresets.BoostFire())
             getgenv().Sound6D(SOUNDS.RUN_START, 2.5, false)
         end
     end
@@ -2720,4 +2722,3 @@ player.CharacterAdded:Connect(function(newChar)
     end)
 end)
 
-print("[KJ Locomotion] Loaded. Fast run threshold: speed >", SPEED_RUN)
