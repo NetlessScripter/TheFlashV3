@@ -37,7 +37,7 @@ local function COLOR_DATA()
     if getgenv().G_NoraWestAllen  then return NegativeSpeedForce.NoraWestAllen      end
     return G_State.Color_DATA.Default
 end
-
+getgenv().G_ReverseFlash
 -- ============================================================
 --  LIGHTING SETUP
 --  All values sourced from LightingRipper output 2026-04-28
