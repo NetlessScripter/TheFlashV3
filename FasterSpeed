@@ -1148,8 +1148,8 @@ CurrentShaker:Start()
 -- ── WALKSPEED + BURST ─────────────────────────────────────────────────
 local setEffectEnabled  -- forward declaration; body assigned below after applyEffect
 
-local BURST_SPEED   = 100000000000  -- max walkspeed (Roblox engine accelerates to this)
-local BURST_START   = 100000000   -- velocity injected on first move frame to skip slow crawl
+local BURST_SPEED   = 100000  -- max walkspeed (Roblox engine accelerates to this)
+local BURST_START   = 100000   -- velocity injected on first move frame to skip slow crawl
 local BASE_SPEED    = 25
 local speedEnabled  = false
 local savedSpeed    = BURST_SPEED  -- persists ramp-up across toggles
